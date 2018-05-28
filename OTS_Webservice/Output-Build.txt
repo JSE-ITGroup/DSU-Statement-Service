@@ -1,0 +1,14 @@
+﻿1>------ Build started: Project: StatmentWarehouseService, Configuration: Debug Any CPU ------
+1>  Restoring NuGet packages...
+1>  To prevent NuGet from downloading packages during build, open the Visual Studio Options dialog, click on the Package Manager node and uncheck 'Allow NuGet to download missing packages'.
+1>  All packages listed in packages.config are already installed.
+1>C:\My Projects\OTS_Webservice\StatmentWarehouseService\Controllers\AccountServicesController.cs(19,7,19,17): warning CS0105: The using directive for 'System.Web' appeared previously in this namespace
+1>C:\My Projects\OTS_Webservice\StatmentWarehouseService\Controllers\StatementServicesController.cs(19,7,19,17): warning CS0105: The using directive for 'System.Web' appeared previously in this namespace
+1>C:\My Projects\OTS_Webservice\StatmentWarehouseService\Models\DependAPIOperation.cs(19,7,19,17): warning CS0105: The using directive for 'System.Web' appeared previously in this namespace
+1>C:\My Projects\OTS_Webservice\StatmentWarehouseService\Controllers\StatementServicesController.cs(55,26,55,31): warning CS0219: The variable 'StrDt' is assigned but its value is never used
+1>C:\My Projects\OTS_Webservice\StatmentWarehouseService\Controllers\StatementServicesController.cs(56,26,56,30): warning CS0219: The variable 'EnDt' is assigned but its value is never used
+1>C:\My Projects\OTS_Webservice\StatmentWarehouseService\Controllers\StatementServicesController.cs(87,30,87,33): warning CS0168: The variable 'EXP' is declared but never used
+1>C:\My Projects\OTS_Webservice\StatmentWarehouseService\Controllers\StatementServicesController.cs(201,28,201,38): warning CS0219: The variable 'expression' is assigned but its value is never used
+1>C:\My Projects\OTS_Webservice\StatmentWarehouseService\Controllers\StatementServicesController.cs(240,38,240,41): warning CS0168: The variable 'exp' is declared but never used
+1>  StatmentWarehouseService -> C:\My Projects\OTS_Webservice\StatmentWarehouseService\bin\StatmentWarehouseService.dll
+========== Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========

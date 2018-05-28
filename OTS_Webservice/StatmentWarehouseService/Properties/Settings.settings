@@ -1,0 +1,120 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="StatmentWarehouseService.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="DependUserName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">admin</Value>
+    </Setting>
+    <Setting Name="Password" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">JSEL0ca!</Value>
+    </Setting>
+    <Setting Name="Participant" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">JCSD</Value>
+    </Setting>
+    <Setting Name="REP_REGADVICE_QUERY" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Content/XmlTemplates/RegistryAdviceTemplate.xml</Value>
+    </Setting>
+    <Setting Name="TimeInfo" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">T00:00:00-05:00</Value>
+    </Setting>
+    <Setting Name="DEFAULT_ROW_COUNT" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">-1</Value>
+    </Setting>
+    <Setting Name="LIST_HOLDER_QUERY" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Content/XmlTemplates/HolderBrowserQueryParam.xml</Value>
+    </Setting>
+    <Setting Name="LIST_TRANSACTION_QUERY" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Content/XmlTemplates/TransactionQuery.xml</Value>
+    </Setting>
+    <Setting Name="LIST_ISIN_QUERY" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Content/XmlTemplates/InstrumentQuery.xml</Value>
+    </Setting>
+    <Setting Name="LIST_COMMIT_QUERY" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Content/XmlTemplates/CommitmentQuery.xml</Value>
+    </Setting>
+    <Setting Name="LIST_COMMIT_OPNAME" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_COMMIT.1</Value>
+    </Setting>
+    <Setting Name="StartDate_Template" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">{0} 00:00:00.000</Value>
+    </Setting>
+    <Setting Name="EndDate_Template" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">{0} 23:59:59.999</Value>
+    </Setting>
+    <Setting Name="SettlementPeriod" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">3</Value>
+    </Setting>
+    <Setting Name="LIST_ACCOUNT_QUERY" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Content/XmlTemplates/AccountQuery.xml</Value>
+    </Setting>
+    <Setting Name="LIST_ACCOUNT_OPNAME" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_ACCOUNT.1</Value>
+    </Setting>
+    <Setting Name="LIST_BALANCE_QUERY" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Content/XmlTemplates/BalanceQuery.xml</Value>
+    </Setting>
+    <Setting Name="LIST_BALANCE_OPNAME" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_BALANCE.1</Value>
+    </Setting>
+    <Setting Name="LIST_ACCOUNT_TABLE" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_ACCOUNT</Value>
+    </Setting>
+    <Setting Name="LIST_BALANCE_TABLE" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_BALANCE</Value>
+    </Setting>
+    <Setting Name="LIST_COMMIT_TABLE" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_COMMIT</Value>
+    </Setting>
+    <Setting Name="REP_REGADVICE_OPNAME" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">REP_REGADVICE_LIST.1</Value>
+    </Setting>
+    <Setting Name="REP_REGADVICE_TABLE" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="LIST_HOLDER_OPNAME" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_HOLDER.1</Value>
+    </Setting>
+    <Setting Name="LIST_HOLDER_TABLE" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_HOLDER</Value>
+    </Setting>
+    <Setting Name="LIST_ISIN_OPNAME" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_ISIN.1</Value>
+    </Setting>
+    <Setting Name="LIST_ISIN_TABLE" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_ISIN</Value>
+    </Setting>
+    <Setting Name="LIST_TRANSACTION_OPNAME" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_TRANSACTION.1</Value>
+    </Setting>
+    <Setting Name="LIST_TRANSACTION_TABLE" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_TRANSACTION</Value>
+    </Setting>
+    <Setting Name="LIST_ACCOUNT_NAMES_QUERY" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Content/XmlTemplates/AccountNamesQuery.xml</Value>
+    </Setting>
+    <Setting Name="LIST_ACCOUNT_NAMES_OPNAME" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_ACCOUNT_NAMES.1</Value>
+    </Setting>
+    <Setting Name="LIST_ACCOUNT_NAMES_TABLE" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LIST_ACCOUNT_NAMES</Value>
+    </Setting>
+    <Setting Name="LIST_PARTICIPANT_OPNAME" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">PARTICIPANT.1</Value>
+    </Setting>
+    <Setting Name="LIST_PARTICIPANT_QUERY" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Content/XmlTemplates/ParticipantQuery.xml</Value>
+    </Setting>
+    <Setting Name="LIST_PARTICIPANT_TABLE" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">DEPOPART</Value>
+    </Setting>
+    <Setting Name="StatementRptResource" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">StatmentWarehouseService.Content.ReportTemplates.Statement.rdlc</Value>
+    </Setting>
+    <Setting Name="StockRptResource" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">StatmentWarehouseService.Content.ReportTemplates.Stock.rdlc</Value>
+    </Setting>
+    <Setting Name="TransactionRptResource" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">StatmentWarehouseService.Content.ReportTemplates.Transaction.rdlc</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

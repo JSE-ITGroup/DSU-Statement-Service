@@ -1,0 +1,83 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
+using System.Data;
+using System.IO;
+using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Text;
+using System.Reflection;
+using System.Threading.Tasks;
+using StatmentWarehouseService.Models;
+using NLog;
+using System.Web;
+using System.Globalization;
+using Microsoft.Reporting.WebForms;
+using System.Web.Mvc.Routing;
+
+
+namespace StatmentWarehouseService.Controllers
+{
+    public class FileDownloadController : System.Web.Mvc.Controller
+    {
+        //
+        // GET: /FileDownload/
+
+
+        public virtual System.Web.Mvc.FileContentResult GenerateStatementPDF(StatementReportModel statementReportData)
+        {
+          
+            var assembly = Assembly.GetExecutingAssembly();
+            var reportStatementResource = Properties.Settings.Default.StatementRptResource.ToString();
+            var reportStockResource = Properties.Settings.Default.StockRptResource.ToString();
+            var reportTransactionResource = Properties.Settings.Default.TransactionRptResource.ToString(); 
+
+         
+            LocalReport localReport = new LocalReport();
+
+            
+            // string[] names = assembly.GetManifestResourceNames();
+ 
+          
+
+               var statementFile = assembly.GetManifestResourceStream(reportStatementResource);
+               var stocksFile = assembly.GetManifestResourceStream(reportStockResource);
+               var transactionFile = assembly.GetManifestResourceStream(reportTransactionResource);
+            
+       
+
+            localReport.LoadReportDefinition(statementFile);
+            localReport.LoadSubreportDefinition("Stock", stocksFile);
+            localReport.LoadSubreportDefinition("Transaction", transactionFile);
+
+            var datasource = new List<StatementReportModel> { statementReportData };
+            localReport.DataSources.Add(new ReportDataSource("StatementDataSet", datasource));
+
+            localReport.SubreportProcessing += (o, args) =>
+            {
+                if (args.ReportPath == "Stock")
+                {
+                    args.DataSources.Add(
+                        new ReportDataSource("StocksDataSet", datasource.First().Stocks));
+                }
+                else if (args.ReportPath == "Transaction")
+                {
+                    var stockId = args.Parameters["StockId"].Values[0];
+                    var transactions =
+                        datasource.First()
+                            .Stocks.FirstOrDefault(x => x.InstrumentCode == stockId)
+                            .Transactions;
+                    args.DataSources.Add(new ReportDataSource("TransactionDataSet", transactions));
+                }
+            };
+            statementFile.Close();
+            stocksFile.Close();
+            transactionFile.Close();
+            string FileName = "Portfolio_" + Guid.NewGuid().ToString().Replace("-","") +".pdf";
+            return this.File(localReport.Render("pdf"), "application/pdf");
+        }
+    }
+}

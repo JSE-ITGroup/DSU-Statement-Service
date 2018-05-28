@@ -1,0 +1,608 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
+using System.Data;
+using System.IO;
+using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Text;
+using System.Reflection;
+using System.Threading.Tasks;
+using StatmentWarehouseService.Models;
+using NLog;
+using System.Web;
+using System.Globalization;
+using Microsoft.Reporting.WebForms;
+using System.Web.Mvc.Routing;
+
+
+
+
+
+namespace StatmentWarehouseService.Controllers
+{
+    [Route("Jse/PortfolioServices")]
+    public class PortfolioServicesController : ApiController
+    {
+        private ServiceReference.RDServiceClient mid = new ServiceReference.RDServiceClient();
+        private ServiceReference.ReturnInfo rt = new ServiceReference.ReturnInfo();
+        string SessionID = String.Empty;
+
+
+
+        string UserName = Properties.Settings.Default.DependUserName.ToString();
+        string Password = Properties.Settings.Default.Password.ToString();
+        string Participant = Properties.Settings.Default.Participant.ToString();
+
+        [Route("PortfolioServices/GetPortfolio/{AccountNumber}/{StartDate}/{EndDate}/{Token}")]
+        public ClientPortfolio GetPortfolio(string AccountNumber, string StartDate, string EndDate,string Token)
+        {
+            ClientPortfolio clientPortfolio = null;
+            try
+            {
+
+                if (string.IsNullOrEmpty(AccountNumber) || string.IsNullOrEmpty(StartDate) || string.IsNullOrEmpty(EndDate))
+                {
+                    throw new HttpResponseException(SetHttpResonse("ONE OR MORE INVALID PARAMETER SUPPLIED,PLEASE CHECK PARAMETER AND RESUMBIT REQUEST", "ResponseCode", "2"));
+                }
+
+                DateTime StrDt = new DateTime();
+                DateTime EnDt = new DateTime();
+                if (!(((DateTime.TryParse(StartDate, out StrDt)) && (DateTime.TryParse(EndDate, out EnDt)))))
+                {
+                    throw new HttpResponseException(SetHttpResonse("ONE OR MORE INVALID DATE PARAMETER SUPPLIED,PLEASE CHECK PARAMETER AND RESUMBIT REQUEST", "ResponseCode", "2"));
+                }
+
+                SessionID = Login(UserName, Password, Participant);
+                if (string.IsNullOrEmpty(SessionID))
+                {
+                     Logger logger = LogManager.GetCurrentClassLogger();
+                     logger.Error(DateTime.Now.ToString() + "\t"+ "Login failed. Terminating");
+                    
+                        throw new HttpResponseException(SetHttpResonse("LOGIN FAILED PLEASE VERIFY CREDENTAIL OR CONTACT ADMINISTRATOR", "ResponseCode", "2"));
+                }
+
+             
+                else
+                {
+
+                    clientPortfolio = GetListOperations(AccountNumber, StartDate, EndDate);
+                    //clientPortfolio = GetTransactions(AccountNumber, StartDate, EndDate);
+                    //Logout();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger logger = LogManager.GetCurrentClassLogger();
+                logger.Error(DateTime.Now.ToString() + ex.Message.ToString());
+
+                throw new HttpResponseException(SetHttpResonse("ERROR RETRIEVING DATA, PLEASE CONTACT ADMINISTRATOR", "ResponseCode", "2"));
+
+                //   Console.WriteLine(String.Format("Application Exception:\r\n{0}", ex.Message));
+            }
+            finally
+            {
+                // Console.WriteLine("Press any key to terminate the application");
+                //Console.ReadKey(true);
+            }
+            return clientPortfolio;
+        }
+        private ClientPortfolio GetTransactions(string AccountNumber, string StartDate, string EndDate)
+        {
+            byte[] bs;
+            string schema;
+
+            string TimeZone = Properties.Settings.Default.TimeInfo.ToString();
+
+            string strtDate = StartDate + TimeZone;
+            string edDate = EndDate + TimeZone;
+
+            string fileName = Properties.Settings.Default.LIST_TRANSACTION_QUERY.ToString();
+
+            int RowCount = 10;
+            RowCount = Properties.Settings.Default.RowCount;
+
+
+
+            string TemplateFileName = HttpContext.Current.Server.MapPath("~/" + fileName);
+            string filter = FileToString(TemplateFileName);
+
+            filter = filter.Replace("@ACCOUNT_REFERENCE", AccountNumber);
+            filter = filter.Replace("@StartDate", strtDate);
+            filter = filter.Replace("@EndDate", edDate);
+
+            ClientPortfolio clientPortfolio = new ClientPortfolio();
+            List<InstrumentInfo> instrumentInfoList = new List<InstrumentInfo>();
+            BrokerInfo brokerInfo = new BrokerInfo();
+            AccountDetails accountDetails = new AccountDetails();
+
+            try
+            {
+
+                rt = mid.DataSetListZIP(SessionID, "LIST_TRANSACTION.1", RowCount, filter, out schema, out bs);
+
+
+                if (rt.HasError) // lets see what server thinks about that
+                {
+                    Logger logger = LogManager.GetCurrentClassLogger();
+                    logger.Error(DateTime.Now.ToString() + "\t" + rt.ErrorInfo.ErrorReference + "\t" + rt.ErrorInfo.ErrorText);
+
+
+                }
+                else
+                {
+                    /* unzip output from server */
+                    DataSet opListDS = Utils.unZipDS(bs, schema);
+
+                    DataTable Transacitons = opListDS.Tables["LIST_TRANSACTION"];
+
+
+                    
+                                        var TransactionList = from Trans in Transacitons.AsEnumerable()
+                                                          select new
+                                                          {
+                                                              TransactionID = Trans.Field<int>("TRANS_ID"),
+                                                              TransactionQty = Trans.Field<decimal>("BALCHANGE_QTY"),
+                                                              TransactionISIN = Trans.Field<int?>("BALCHANGE_ISIN"),
+                                                              TransactionAccount = Trans.Field<int?>("BALCHANGE_ACCOUNT"),
+                                                              TransactionDate = Trans.Field<DateTime?>("BALCHANGE_DATE"),
+                                                              TransactionTypeDesc = Trans.Field<string>("TRANTYPE_DESCRIPTION"),
+                                                              ISINCode = Trans.Field<string>("ISIN_CODE"),
+                                                              TransactionPrice = Trans.Field<decimal?>("TRANS_PRICE") ,
+                                                              TransactionValue = Trans.Field<decimal?>("TRANS_VALUE"),
+                                                             // Name = Trans.Field<string>("NAME_BLOCK_1"),
+                                                              BrokerName = Trans.Field<string>("TRANS_BROKER"),
+                                                              BrokerCode = Trans.Field<string>("TRANS_BROKER"),
+                                                              TransactionMatch = Trans.Field<int?>("TRANS_MATCH")
+                      
+                      
+                   
+
+                                                          };
+                                        
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger logger = LogManager.GetCurrentClassLogger();
+                logger.Error(DateTime.Now.ToString() + "\t" + ex.Message);
+
+                
+            }
+            finally
+            {
+                
+                mid.Close();
+            }
+            return clientPortfolio;
+        }
+
+        private ClientPortfolio GetListOperations(string AccountNumber, string StartDate, string EndDate)
+        {
+            byte[] bs;
+            string schema;
+
+            string TimeZone = Properties.Settings.Default.TimeInfo.ToString();
+
+            string strtDate = StartDate + TimeZone;
+            string edDate = EndDate + TimeZone;
+
+            string fileName = Properties.Settings.Default.REP_REGADVICE_QUERY.ToString();
+            string OperationName = Properties.Settings.Default.REP_REGADVICE_OPNAME.ToString();
+
+            int RowCount =10;
+            RowCount = Properties.Settings.Default.RowCount;
+
+            
+
+            string TemplateFileName = HttpContext.Current.Server.MapPath("~/" + fileName);
+            string filter = FileToString(TemplateFileName);
+
+            filter = filter.Replace("@AccountReference", AccountNumber);
+            filter = filter.Replace("@StartDate", strtDate);
+            filter = filter.Replace("@EndDate", edDate);
+
+            ClientPortfolio clientPortfolio = new ClientPortfolio();
+            List<InstrumentInfo> instrumentInfoList = new List<InstrumentInfo>();
+            BrokerInfo brokerInfo = new BrokerInfo();
+            AccountDetails accountDetails = new AccountDetails();
+
+            try
+            {
+
+                rt = mid.DataSetListZIP(SessionID, OperationName, RowCount, filter, out schema, out bs);
+
+
+                if (rt.HasError) // lets see what server thinks about that
+                {
+                    Logger logger = LogManager.GetCurrentClassLogger();
+                    logger.Error(DateTime.Now.ToString() + "\t" + rt.ErrorInfo.ErrorReference + "\t" + rt.ErrorInfo.ErrorText);
+
+
+                }
+                else
+                {
+                    /* unzip output from server */
+                    DataSet opListDS = Utils.unZipDS(bs, schema);
+
+                    DataTable Balances = opListDS.Tables["BALANCE"];
+                    DataTable Balchange = opListDS.Tables["BALCHANGE"];
+                    DataTable ISIN = opListDS.Tables["ISIN"];
+                    DataTable TranTypes = opListDS.Tables["CONFIG_TRANSACTION_TYPE"];
+                    decimal NetActivity = 0.0M;
+
+               
+
+
+                    var balanceList = from Balance in Balances.AsEnumerable()
+                                      select new
+                                      {
+                                          BalanceAccount = Balance.Field<int>("BALANCE_ACCOUNT"),
+                                          AccountReference = Balance.Field<string>("ACCOUNT_REFERENCE"),
+                                          StartPledge = Balance.Field<decimal?>("BALTIME_PLEDGED_OPEN") == null ? 0 : Balance.Field<decimal?>("BALTIME_PLEDGED_OPEN"),
+                                          EndingPledge = Balance.Field<decimal?>("BALTIME_PLEDGED_CLOSE") == null ? 0 : Balance.Field<decimal?>("BALTIME_PLEDGED_CLOSE"),
+                                          Price = Balance.Field<decimal?>("PHIST_CLOSE") == null ? 0 : Balance.Field<decimal?>("PHIST_CLOSE"),
+                                         // Value = Balance.Field<decimal?>("PHIST_CLOSE") == null ? 0 : Balance.Field<decimal?>("PHIST_CLOSE") * Balance.Field<decimal?>("BALTIME_BALANCE_CLOSE") ,//== null ? 0 : Balance.Field<decimal?>("BALTIME_BALANCE_CLOSE"),
+                                          Value = Balance.Field<decimal?>("PHIST_CLOSE") * Balance.Field<decimal?>("BALTIME_BALANCE_CLOSE"),//== null ? 0 : Balance.Field<decimal?>("BALTIME_BALANCE_CLOSE"),
+                                       
+                                          Name = Balance.Field<string>("NAME_BLOCK_1"),
+                                          BrokerName = Balance.Field<string>("DEPOPART_NAME"),
+                                          BrokerCode = Balance.Field<string>("DEPOPART_CODE"),
+                                          BalCarriedForward = Balance.Field<decimal?>("BALTIME_BALANCE_CLOSE"),
+                                          BalBroughtForward = Balance.Field<decimal?>("BALTIME_BALANCE_OPEN"),
+                                          ISIN = Balance.Field<int?>("BALANCE_ISIN")
+
+                                      };
+
+                    List<InstrumentInfo> InstrumentInfoList = new List<InstrumentInfo>();
+                    NetActivity = 0;
+                    foreach (var b in balanceList.ToList())
+                    {
+
+                        brokerInfo.BrokerCode = b.BrokerCode;
+                        brokerInfo.BrokerName = b.BrokerName;
+                        accountDetails.Name = b.Name;
+                        accountDetails.Account = b.AccountReference.ToString();
+
+
+                        InstrumentInfo InstrInfo = new InstrumentInfo();
+                        InstrInfo.InstrumentISINCode = b.ISIN.ToString();
+
+                        //Get Balance Data
+                        var BalChange = from Balch in Balchange.AsEnumerable()
+                                        where Balch.Field<int>("BALCHANGE_ACCOUNT") == b.BalanceAccount
+                                        && Balch.Field<int>("BALCHANGE_ISIN") == b.ISIN
+
+                                        select new
+                                        {
+                                            TransactionID = Balch.Field<int>("Trans_ID"),
+                                            TransactionType = Balch.Field<string>("Trans_Type"),
+                                            TransactionDate = Balch.Field<DateTime>("BALCHANGE_DATE"),
+                                            TransactonQty = Balch.Field<decimal?>("BALCHANGE_QTY"),
+                                            TransactonCurr = Balch.Field<string>("TRANS_CCY")
+
+                                        };
+
+
+
+                        //GetInstruments Header
+                        var Instrument = from isin in ISIN.AsEnumerable()
+                                         where isin.Field<int>("ISIN_ID") == b.ISIN
+                                         select new
+                                         {
+                                             ISINID = isin.Field<int>("ISIN_ID"),
+                                             ISIN_Code = isin.Field<string>("ISIN_CODE"),
+                                             ISIN_CCY = isin.Field<string>("ISIN_CCY"),
+                                             ISIN_FULL_NAME = isin.Field<string>("ISIN_FULL_NAME"),
+                                             ISIN_SHORT_NAME = isin.Field<string>("ISIN_SHORT_NAME")
+                                         };
+
+                        InstrInfo.InstrumentISINCode = b.ISIN.ToString();
+                        foreach (var inst in Instrument.ToList())
+                        {
+                            InstrInfo.InstrumentISINCode = inst.ISIN_Code;
+                            InstrInfo.InstrumentCode = inst.ISIN_SHORT_NAME.ToString();
+                            InstrInfo.InstrumentName = inst.ISIN_FULL_NAME.ToString();
+                            InstrInfo.ISINCurrency = inst.ISIN_CCY.ToString();
+
+
+                        }
+
+
+                        //Get Transaction Details ----------------------------------------------------Balchange --------------------------------------------------------------
+                        NetActivity = 0;
+                        List<TransactionActivity> TransActivityList = new List<TransactionActivity>();
+                        foreach (var bal in BalChange.ToList())
+                        {
+
+                            TransactionActivity TransActivity = new TransactionActivity();
+                            TransActivity.TransactionDate = bal.TransactionDate.ToString("yyyy-MM-dd");
+                            TransActivity.TransactionID = bal.TransactionID.ToString();
+                            TransActivity.TransCurrency = bal.TransactonCurr;
+
+                            TransActivity.Quantity = bal.TransactonQty.ToString();
+                            NetActivity = NetActivity + Convert.ToDecimal(TransActivity.Quantity);
+
+                            var TransType = from TranType in TranTypes.AsEnumerable()
+                                            where TranType.Field<string>("TRANTYPE") == bal.TransactionType
+
+                                            select new
+                                            {
+                                                TranType = TranType.Field<string>("TRANTYPE"),
+                                                TranDesc = TranType.Field<string>("TRANTYPE_DESCRIPTION")
+                                            };
+
+
+                            foreach (var Tran in TransType.ToList())
+                            {
+                                TransActivity.TransType = Tran.TranDesc;
+
+                            }
+                            TransActivityList.Add(TransActivity);
+
+
+
+                        }
+                        InstrInfo.TransactionActivity = TransActivityList;
+
+                        InstrInfo.BroughtForwardDate = StartDate.ToString();
+                        InstrInfo.CarryForwardDate = EndDate.ToString();
+
+                        //;
+                        InstrInfo.PledgeEndingBalance = b.EndingPledge.ToString();
+                        InstrInfo.PlegeStartingBalance = b.StartPledge.ToString();
+                        InstrInfo.Value = b.Value.ToString().Trim() == "" ? "0" : b.Value.ToString().Trim();
+                        InstrInfo.Price = b.Price.ToString();
+                        InstrInfo.NetActivityAmount = NetActivity.ToString();
+
+                        InstrInfo.CarryForwardAmount = b.BalCarriedForward.ToString();
+                        InstrInfo.BroughtForwardAmount = b.BalBroughtForward.ToString();
+
+                        InstrumentInfoList.Add(InstrInfo);
+
+
+                    }
+
+                    //GrandTotal
+                    List<GrandTotal> GrandTotalList = new List<Models.GrandTotal>();
+                    try
+                    {
+                        var GrandTotal = from t in InstrumentInfoList
+                                         group t by t.ISINCurrency into g
+                                         select new
+                                         {
+                                             ISINCurrency = g.Key,
+                                             totalAmount = g.Sum(a => (decimal.Parse(a.Value))) // blanks will be treated as 0
+                                         };
+
+                        foreach (var g in GrandTotal.ToList())
+                        {
+                            GrandTotal grandTotal = new GrandTotal();
+                            grandTotal.GrandTotalCurrency = g.ISINCurrency;
+                            grandTotal.GrandTotalAmount = g.totalAmount.ToString();
+                            GrandTotalList.Add(grandTotal);
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        Logger logger = LogManager.GetCurrentClassLogger();
+                        logger.Error(DateTime.Now.ToString() + "\t" + ex.Message);
+
+                    }
+                    
+                   
+                  
+
+
+                    clientPortfolio.GrandTotal = GrandTotalList;
+                    clientPortfolio.AccountDetails = accountDetails;
+                    clientPortfolio.Broker = brokerInfo;
+                    clientPortfolio.InstrumentInfo = InstrumentInfoList;
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger logger = LogManager.GetCurrentClassLogger();
+                logger.Error(DateTime.Now.ToString() + "\t" + ex.Message);
+
+                //Console.WriteLine(String.Format("Operations list exception:\r\n{0}", ex.Message));
+            }
+            finally
+            {
+                //always close once done.
+                //if (mid != null)
+                //
+                mid.Close();
+            }
+            return clientPortfolio;
+        }
+        private void Logout()
+        {
+            Console.WriteLine();
+            try
+            {
+                rt = mid.Logout(SessionID); // call logout
+                if (rt.HasError)
+                {
+                    Logger logger = LogManager.GetCurrentClassLogger();
+                    logger.Error(DateTime.Now.ToString() + "\t" + rt.ErrorInfo.ErrorReference + "\t" + rt.ErrorInfo.ErrorText);
+
+
+                }
+                else
+                {
+                    SessionID = null; // termination accepted - no point to keep old value
+                    Console.WriteLine(String.Format("Logout successful."));
+                }
+            }
+            catch (Exception ex) //catch unexpected stuff that is not able to set "rt" (like network failure)
+            {
+
+                Logger logger = LogManager.GetCurrentClassLogger();
+                logger.Error(DateTime.Now.ToString() + "\t" + ex.Message);
+
+            }
+            finally
+            {
+                //always close once done.
+                // if (mid != null)
+                // mid.Close();
+
+            }
+        }
+        private string Login(string UserName, string Password, string Participant)
+        {
+            string sessionID = String.Empty;
+            Console.WriteLine();
+            try
+            {
+                /* Call actual login. password is sent in MD5 */
+                rt = mid.DependLogin(UserName, Utils.MD5(Password), Assembly.GetExecutingAssembly().GetName().Name + " Ver: " + Assembly.GetExecutingAssembly().GetName().Version.ToString(), Participant, out sessionID);
+                if (rt.HasError)
+                {
+                    Logger logger = LogManager.GetCurrentClassLogger();
+                    logger.Error(DateTime.Now.ToString() + "\t" + String.Format("Login error: {0}\r\n{1}", rt.ErrorInfo.ErrorReference, rt.ErrorInfo.ErrorText));
+
+                }
+
+                else
+                {
+                    Logger logger = LogManager.GetCurrentClassLogger();
+                    logger.Error(DateTime.Now.ToString() + "\t" + String.Format("Login successful.\r\nSessionID:{0}", sessionID));
+
+                }
+            }
+            catch (Exception ex) //catch unexpected stuff that is not able to set "rt" (like network failure)
+            {
+                // Console.WriteLine(String.Format("Login exception:\r\n{0}", ex.Message));
+                Logger logger = LogManager.GetCurrentClassLogger();
+                logger.Error(DateTime.Now.ToString() + "\t" + "Login exception: \t" + ex.Message);
+            }
+            finally
+            {
+                //always close once done.
+                //if (mid != null)
+                //mid.Close();
+            }
+            return sessionID;
+        }
+
+        public  string FileToString(string FileName)
+        {
+
+            System.IO.StreamReader file = new System.IO.StreamReader(FileName);
+            string fileContent = file.ReadToEnd();
+            return fileContent;
+
+        }
+        public HttpResponseMessage SetHttpResonse(string Message, string MessageDetail, string Code)
+        {
+            HttpError myCustomError = new HttpError(Message) { { MessageDetail, Code } };
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, myCustomError);
+        }
+
+        [Route("PortfolioServices/PortfolioDownload/{AccountNumber}/{StartDate}/{EndDate}/{Token}/{Token2}")]
+        [System.Web.Http.AcceptVerbs("GET", "POST")]
+        [System.Web.Http.HttpGet]
+        public System.Web.Mvc.FileContentResult PortfolioDownload(string AccountNumber, string StartDate, string EndDate, string Token,string Token2)
+        {
+            FileDownloadController file = new FileDownloadController();
+
+            DateTime sDate =new DateTime();
+            DateTime eDate = new DateTime();
+
+           bool start= DateTime.TryParse(StartDate,out sDate);
+           bool end = DateTime.TryParse(EndDate, out eDate);
+
+       /*   if (start && end)
+           {
+               DateTime sDate = Convert.ToDateTime(StartDate);
+               DateTime eDate = Convert.ToDateTime(EndDate);
+           } */
+
+             var reportData =  GetPortfolio(AccountNumber, StartDate, EndDate,"");
+             AccountServicesController ac = new AccountServicesController();
+             List<AccountInfoView>AccView =   ac.GetAccountInfo(AccountNumber);
+             var customer = AccView.FirstOrDefault();
+            
+
+             if (reportData != null)
+             {
+                 decimal temp, temp1;
+                 var statementData = new StatementReportModel
+                 {
+                     DateRun = DateTime.Now,
+                     FromDate = sDate,//StartDate,
+                     ToDate = eDate,
+                     UserRunFor = null,//identity.UserName,
+                     Stocks = new List<StockModel>(),
+                     ClientName = reportData.AccountDetails.Name,
+                     AccountNumber = reportData.AccountDetails.Account,
+                     GrandTotal = reportData.GrandTotal != null && reportData.GrandTotal.Any() && decimal.TryParse(reportData.GrandTotal.First().GrandTotalAmount, out temp) ?
+                                  temp.ToString("N2") + " " + reportData.GrandTotal.First().GrandTotalCurrency : null,
+                       customer = customer != null ? new CustomerModel
+                      {
+                          AccountHolder = customer.AccountOwnerList,
+                          AccountNumber = customer.AccountReference
+                      }
+                      : new CustomerModel() 
+                 };
+
+                 if (reportData.InstrumentInfo != null)
+                 {
+                     foreach (var instrumentInfo in reportData.InstrumentInfo)
+                     {
+                         var usCulture = new CultureInfo("en-US");
+                         statementData.Stocks.Add(
+                             new StockModel
+                             {
+                                 BroughtForwardAmount = decimal.TryParse(instrumentInfo.BroughtForwardAmount, out temp) ? temp : 0,
+                                 BroughtForwardDate = DateTime.Parse(instrumentInfo.BroughtForwardDate, usCulture),
+                                 InstrumentCode = instrumentInfo.InstrumentCode,
+                                 InstrumentName = instrumentInfo.InstrumentName,
+                                 InstrumentsSINCode = instrumentInfo.InstrumentISINCode,
+                                 NetActivity = decimal.Parse(instrumentInfo.NetActivityAmount),
+                                 CarriedForward = decimal.Parse(instrumentInfo.CarryForwardAmount),
+                                 PledgeEndingValue = decimal.Parse(instrumentInfo.PledgeEndingBalance),
+                                 PledgeStartingValue = decimal.Parse(instrumentInfo.PlegeStartingBalance),
+                                 Price = decimal.Parse(instrumentInfo.Price),
+                                 Transactions =
+                                     instrumentInfo.TransactionActivity.Select(
+                                         x =>
+                                     new TransactionModel
+                                     {
+                                         Description = x.TransType,
+                                         Quantity =
+                                             Convert.ToInt32(decimal.Parse(x.Quantity)),
+                                         TransactionDate =
+                                             DateTime.Parse(x.TransactionDate, usCulture),
+                                         TransactionNumber = x.TransactionID
+                                     }).ToList(),
+                                 Value = decimal.TryParse(instrumentInfo.Value, out temp1) ? temp1 : 0M
+                             });
+                     }
+
+                     statementData.Stocks.ForEach(x => x.Transactions.Insert(0, new TransactionModel { Description = "Brought Forward", TransactionDate = x.BroughtForwardDate, Quantity = Convert.ToInt32(x.BroughtForwardAmount) }));
+                 }
+
+                 //return GenerateStatementPDF(statementData);
+                 return file.GenerateStatementPDF(statementData);
+             }
+             else
+             {
+                 
+                 return file.GenerateStatementPDF(null);
+                // return GenerateStatementPDF(null); 
+             }
+          
+
+        }
+              
+    }
+}

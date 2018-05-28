@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="c032d086-e556-4cd4-af9a-d6491a58508a" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
+  <ClientOptions>
+    <GenerateAsynchronousMethods>false</GenerateAsynchronousMethods>
+    <GenerateTaskBasedAsynchronousMethod>true</GenerateTaskBasedAsynchronousMethod>
+    <EnableDataBinding>true</EnableDataBinding>
+    <ExcludedTypes />
+    <ImportXmlTypes>false</ImportXmlTypes>
+    <GenerateInternalTypes>false</GenerateInternalTypes>
+    <GenerateMessageContracts>false</GenerateMessageContracts>
+    <NamespaceMappings />
+    <CollectionMappings />
+    <GenerateSerializableTypes>true</GenerateSerializableTypes>
+    <Serializer>Auto</Serializer>
+    <UseSerializerForFaults>true</UseSerializerForFaults>
+    <ReferenceAllAssemblies>false</ReferenceAllAssemblies>
+    <ReferencedAssemblies />
+    <ReferencedDataContractTypes />
+    <ServiceContractMappings />
+  </ClientOptions>
+  <MetadataSources>
+    <MetadataSource Address="http://10.100.100.63/Live_Copy/RDService.svc" Protocol="http" SourceId="1" />
+  </MetadataSources>
+  <Metadata>
+    <MetadataFile FileName="RDService.wsdl" MetadataType="Wsdl" ID="d4544db6-7990-4f4a-b2f5-86ab0e8c17b6" SourceId="1" SourceUrl="http://jse-vm-psl-2008.jamstocklan.com/Live_copy/RDService.svc?wsdl=wsdl0" />
+    <MetadataFile FileName="RDService.xsd" MetadataType="Schema" ID="a585d33b-b2bb-491d-b209-86c030c93b56" SourceId="1" SourceUrl="http://jse-vm-psl-2008.jamstocklan.com/Live_copy/RDService.svc?xsd=xsd2" />
+    <MetadataFile FileName="RDService1.wsdl" MetadataType="Wsdl" ID="8a39883a-2641-4e71-8ee8-85b3322e01c6" SourceId="1" SourceUrl="http://jse-vm-psl-2008.jamstocklan.com/Live_copy/RDService.svc?wsdl" />
+    <MetadataFile FileName="RDService1.xsd" MetadataType="Schema" ID="a62bd4f7-f393-48d2-80b2-e29a4e2418e1" SourceId="1" SourceUrl="http://jse-vm-psl-2008.jamstocklan.com/Live_copy/RDService.svc?xsd=xsd3" />
+    <MetadataFile FileName="RDService2.xsd" MetadataType="Schema" ID="6455ffc2-094d-423d-8ca4-1f8e2edaed32" SourceId="1" SourceUrl="http://jse-vm-psl-2008.jamstocklan.com/Live_copy/RDService.svc?xsd=xsd0" />
+    <MetadataFile FileName="RDService3.xsd" MetadataType="Schema" ID="63f2afbe-a119-4c29-84e1-07b053400b64" SourceId="1" SourceUrl="http://jse-vm-psl-2008.jamstocklan.com/Live_copy/RDService.svc?xsd=xsd1" />
+    <MetadataFile FileName="RDService.disco" MetadataType="Disco" ID="0bc63783-bdd8-45c8-ac87-29dfe8633b68" SourceId="1" SourceUrl="http://jse-vm-psl-2008.jamstocklan.com/Live_copy/RDService.svc?disco" />
+  </Metadata>
+  <Extensions>
+    <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />
+    <ExtensionFile FileName="configuration.svcinfo" Name="configuration.svcinfo" />
+  </Extensions>
+</ReferenceGroup>

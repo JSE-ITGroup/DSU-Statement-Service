@@ -1,0 +1,9 @@
+<ArrayOfQueryParams xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<QueryParams>
+<PARAMS />
+<PARAM_WHERE>
+  (ACCOUNT_REFERENCE =  '@ACCOUNT_REFERENCE')
+</PARAM_WHERE>
+</QueryParams>
+</ArrayOfQueryParams>
+
